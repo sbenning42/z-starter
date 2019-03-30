@@ -1,9 +1,18 @@
-import { ZSchema, ZActionSchema, asyncWoPayloadConfig, asyncConfig, createZStore, Action, basicAsyncResolve, dispatchForStore } from '../Z/Z';
 import { Injectable } from '@angular/core';
 import { StorageService } from '../core/services/storage/storage.service';
 import { Store } from '@ngrx/store';
 import { Effect, Actions } from '@ngrx/effects';
 import { of } from 'rxjs';
+import {
+    ZSchema,
+    ZActionSchema,
+    asyncWoPayloadConfig,
+    asyncConfig,
+    createZStore,
+    Action,
+    basicAsyncResolve,
+    dispatchForStore
+} from '../core/Z';
 
 export const storageSelector = 'STORAGE';
 
@@ -37,10 +46,14 @@ export const storageConfig = {
     clear: asyncWoPayloadConfig('[STORAGE] Clear'),
 };
 
+export const storageReducers = {
+
+};
+
 @Injectable()
 export class StorageStore {
 
-    Z = createZStore<StorageState, StorageSchema>(this.store, storageSelector, initialStorageState, storageConfig);
+    Z = createZStore<StorageState, StorageSchema>(this.store, storageSelector, initialStorageState, storageConfig, storageReducers);
     dispatch = dispatchForStore(this.store);
 
     constructor(
@@ -84,22 +97,22 @@ export class StorageStore {
                     return state;
             }
         }
-        store.addReducer(storageSelector, storageReducer);
+        // store.addReducer(storageSelector, storageReducer);
     }
     @Effect({ dispatch: true })
-    protected get$ = this.actions$.pipe(
+    protected $get$ = this.actions$.pipe(
         basicAsyncResolve(this.Z.get, () => of({}))
     );
     @Effect({ dispatch: true })
-    protected save$ = this.actions$.pipe(
+    protected $save$ = this.actions$.pipe(
         basicAsyncResolve(this.Z.save, (payload: Entries) => of(payload))
     );
     @Effect({ dispatch: true })
-    protected remove$ = this.actions$.pipe(
+    protected $remove$ = this.actions$.pipe(
         basicAsyncResolve(this.Z.remove, (payload: string[]) => of(payload))
     );
     @Effect({ dispatch: true })
-    protected clear$ = this.actions$.pipe(
+    protected $clear$ = this.actions$.pipe(
         basicAsyncResolve(this.Z.clear, () => of({}))
     );
 }

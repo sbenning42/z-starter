@@ -1,6 +1,7 @@
 import { Component, OnInit } from "@angular/core";
 import { Observable, of } from 'rxjs';
 import { Todo, TodoStore } from 'src/app/state/todo.store';
+import { StorageStore } from 'src/app/state/storage.store';
 
 @Component({
   selector: "app-todo",
@@ -14,11 +15,19 @@ export class TodoPage implements OnInit {
   error$: Observable<string> = of(null);
 
   constructor(
-    public todo: TodoStore
+    public todo: TodoStore,
+    public storage: StorageStore,
   ) {}
 
   ngOnInit() {
-    this.todo.dispatch(new this.todo.GetAllRequest());
-    this.todo.dispatch(new this.todo.AddOneRequest({ name: 'Added !' }));
+    const testTodo = () => {
+      const { GetAllRequest, AddOneRequest } = this.todo;
+      this.todo.dispatch(new GetAllRequest());
+      this.todo.dispatch(new AddOneRequest({ name: 'Added !' }));
+    };
+    const testStorage = () => {
+      const { get, save } = this.storage.Z;
+      this.storage.dispatch(new get.Request());
+    };
   }
 }

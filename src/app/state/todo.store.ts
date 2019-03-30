@@ -1,10 +1,19 @@
 import { Update, EntityState, createEntityAdapter, Dictionary } from '@ngrx/entity';
-import { ZSchema, ZActionSchema, syncConfig, asyncConfig, createZStore, Action, asyncWoPayloadConfig, withGrabAsyncCorrelation, Header, withCorrelationId, basicAsyncResolve } from "../Z/Z";
 import { Injectable } from '@angular/core';
 import { Store, select, createSelector } from '@ngrx/store';
 import { Effect, Actions } from '@ngrx/effects';
 import { zip } from 'rxjs';
 import { TodoService } from '../core/services/todo/todo.service';
+import {
+    ZSchema,
+    ZActionSchema,
+    syncConfig,
+    asyncConfig,
+    createZStore,
+    Action,
+    asyncWoPayloadConfig,
+    basicAsyncResolve
+} from "../core/Z";
 
 export const todoSelector = 'TODO';
 
@@ -171,7 +180,7 @@ export class TodoStore {
                     return state;
             }
         };
-        store.addReducer(todoSelector, todoReducer);
+        // store.addReducer(todoSelector, todoReducer);
     }
     dispatch(action: Action<TodoPayloads | void>) {
         this.store.dispatch(action);
