@@ -3,6 +3,8 @@ import { Component } from '@angular/core';
 import { Platform } from '@ionic/angular';
 import { SplashScreen } from '@ionic-native/splash-screen/ngx';
 import { StatusBar } from '@ionic-native/status-bar/ngx';
+import { StorageStore } from './state/storage.store';
+import { ActionsService } from './core/services/actions/actions.service';
 
 @Component({
   selector: 'app-root',
@@ -30,13 +32,17 @@ export class AppComponent {
   constructor(
     private platform: Platform,
     private splashScreen: SplashScreen,
-    private statusBar: StatusBar
+    private statusBar: StatusBar,
+    private storage: StorageStore,
+    public actions: ActionsService
   ) {
     this.initializeApp();
   }
 
   initializeApp() {
+    const { GetStorage } = this.actions.Z;
     this.platform.ready().then(() => {
+      this.storage.dispatch(new GetStorage())
       this.statusBar.styleDefault();
       this.splashScreen.hide();
     });

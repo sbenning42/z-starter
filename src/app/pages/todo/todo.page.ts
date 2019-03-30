@@ -1,11 +1,6 @@
 import { Component, OnInit } from "@angular/core";
-import { Observable } from 'rxjs';
-import { Todo } from '../../state/todo/todo.model';
-import { Store } from '@ngrx/store';
-import { getAllTodos, getLoading, getError } from '../../state/todo';
-
-import * as fromStore from '../../state/app.reducer';
-import * as fromTodo from '../../state/todo/todo.actions';
+import { Observable, of } from 'rxjs';
+import { Todo, TodoStore } from 'src/app/state/todo.store';
 
 @Component({
   selector: "app-todo",
@@ -13,13 +8,17 @@ import * as fromTodo from '../../state/todo/todo.actions';
   styleUrls: ["./todo.page.scss"]
 })
 export class TodoPage implements OnInit {
-  todos$: Observable<Array<Todo>> = this.store.select(getAllTodos);
-  loading$: Observable<boolean> = this.store.select(getLoading);
-  error$: Observable<string> = this.store.select(getError);
 
-  constructor(private store: Store<fromStore.AppState>) {}
+  todos$: Observable<Array<Todo>> = this.todo.all$;
+  loading$: Observable<boolean> = of(false);
+  error$: Observable<string> = of(null);
+
+  constructor(
+    public todo: TodoStore
+  ) {}
 
   ngOnInit() {
-    this.store.dispatch(new fromTodo.GetAllTodos());
+    this.todo.dispatch(new this.todo.GetAllRequest());
+    this.todo.dispatch(new this.todo.AddOneRequest({ name: 'Added !' }));
   }
 }
