@@ -11,7 +11,6 @@ import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 
-import { StateModule } from './state/state.module';
 import { CoreModule } from './core/core.module';
 
 @NgModule({
@@ -21,7 +20,6 @@ import { CoreModule } from './core/core.module';
     BrowserModule,
     IonicModule.forRoot(),
     AppRoutingModule,
-    StateModule,
     CoreModule,
     StoreDevtoolsModule.instrument({ maxAge: 100 }),
   ],

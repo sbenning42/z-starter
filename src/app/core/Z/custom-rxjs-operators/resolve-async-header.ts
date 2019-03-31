@@ -1,8 +1,9 @@
 import { Observable, of } from 'rxjs';
-import { AsyncAction, Action } from '../../Z';
 import { WithHeaderOfType, WithHeaderIdOfType } from './filters';
 import { grabHeader } from './maps';
 import { mergeMap, withLatestFrom, take, map, catchError, takeUntil } from 'rxjs/operators';
+import { AsyncAction } from '../core/models';
+import { Action } from '../core/types';
 
 export type _ResolverWithRequestAndSource<Request, Response, Source> = (request: Request, source: Source) => Observable<Response>;
 export type _ResolverWithRequest<Request, Response, _ extends 'foo' = 'foo'> = (request: Request, _?: _) => Observable<Response>;

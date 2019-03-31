@@ -4,8 +4,6 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 
-// import { Todo } from '../../state/todo/todo.model';
-
 type Todo = any;
 
 @Injectable()

@@ -1,7 +1,8 @@
 import { Observable } from 'rxjs';
-import { Action, Header } from '../../Z';
 import { ofType } from '@ngrx/effects';
 import { filter } from 'rxjs/operators';
+import { Header } from '../core/models';
+import { Action } from '../core/types';
 
 export function findHeader(predicate: (header: Header) => boolean) {
     const hasHeader = ({ headers }: Action<any>) => headers && headers.some(predicate);
