@@ -29,5 +29,6 @@ export class TodoPage implements OnInit {
       const { get, save } = this.storage.Z;
       this.storage.dispatch(new get.Request());
     };
+    testStorage()
   }
 }

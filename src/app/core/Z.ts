@@ -64,9 +64,7 @@ export class AsyncAction<Request, Response> {
         public Response: AsyncResponseActionConstructor<Response> & ActionType & Dispatcher<Response>,
         public Cancel: AsyncCancelActionConstructor & ActionType & Dispatcher<void>,
         public Error: AsyncErrorActionConstructor & ActionType & Dispatcher<Error>,
-    ) {
-
-    }
+    ) {}
 }
 export class ActionFactory {
     constructor(protected store: Store<any>) {}

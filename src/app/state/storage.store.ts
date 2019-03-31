@@ -47,7 +47,13 @@ export const storageConfig = {
 };
 
 export const storageReducers = {
-
+    get: {
+        response: (state: StorageState, { payload }: Action<Entries>) => ({
+            ...state,
+            loaded: true,
+            entries: payload
+        }),
+    },
 };
 
 @Injectable()
