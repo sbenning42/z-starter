@@ -15,10 +15,5 @@ export class TodoPage implements OnInit {
   ) {}
 
   ngOnInit() {
-    const testTodo = () => {
-    };
-    const testStorage = () => {
-    };
-    testStorage()
   }
 }
