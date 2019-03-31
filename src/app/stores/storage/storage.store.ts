@@ -1,5 +1,5 @@
 import { Injectable } from "@angular/core";
-import { BaseZ } from 'src/app/core/Z/core/Z';
+import { BaseZ } from 'src/app/core/z/core/base-z';
 import {
     StorageSchema,
     STORAGE,

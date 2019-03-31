@@ -1,6 +1,6 @@
 import { EntityState, createEntityAdapter } from '@ngrx/entity';
-import { Schemas, Schema, Action } from 'src/app/core/Z/core/types';
-import { createAsyncActionConfig } from 'src/app/core/Z/core/config-factories';
+import { Schemas, Schema, Action } from 'src/app/core/z/core/types';
+import { createAsyncActionConfig } from 'src/app/core/z/core/config-factories';
 
 export const STORAGE = 'STORAGE';
 
