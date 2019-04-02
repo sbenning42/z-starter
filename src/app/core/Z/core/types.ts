@@ -1,5 +1,7 @@
-import { ActionWithoutPayload, ActionWithPayload } from './models';
+import { ActionWithoutPayload, ActionWithPayload, Headers, Header } from './models';
 import { ActionsSchema, ActionSchema } from './dirty-types';
+
+export type HeadersType = (string | Header | { type: string, data?: any })[];
 
 export type Action<Payload> = Payload extends void ? ActionWithoutPayload : ActionWithPayload<Payload>;
 

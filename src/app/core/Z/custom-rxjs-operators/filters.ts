@@ -5,7 +5,7 @@ import { Header } from '../core/models';
 import { Action } from '../core/types';
 
 export function findHeader(predicate: (header: Header) => boolean) {
-    const hasHeader = ({ headers }: Action<any>) => headers && headers.some(predicate);
+    const hasHeader = ({ headers }: Action<any>) => headers && headers.filter(header => !!header).some(predicate);
     return (actions$: Observable<Action<any>>) => actions$.pipe(filter(hasHeader));
 }
 

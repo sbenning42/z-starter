@@ -8,7 +8,13 @@ export class InMemoryDataService {
       { id: 1, name: "Shopping" },
       { id: 2, name: "Meeting" }
     ];
+    const users: {
+    } = [
+      { id: '1', email: "test", password: 'test' },
+      { id: '2', email: "test@test.test", password: 'Test42Test' },
+      { id: '3', email: "sben@sben.sben", password: 'Sben42Sben' },
+    ];
 
-    return { todos };
+    return { todos, users };
   }
 }

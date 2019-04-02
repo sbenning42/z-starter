@@ -2,7 +2,7 @@ import { Observable, of } from 'rxjs';
 import { WithHeaderOfType, WithHeaderIdOfType } from './filters';
 import { grabHeader } from './maps';
 import { mergeMap, withLatestFrom, take, map, catchError, takeUntil } from 'rxjs/operators';
-import { AsyncAction } from '../core/models';
+import { AsyncAction, Headers } from '../core/models';
 import { Action } from '../core/types';
 
 export type _ResolverWithRequestAndSource<Request, Response, Source> = (request: Request, source: Source) => Observable<Response>;
@@ -51,6 +51,8 @@ export function basicAsyncHeaderResolver<Request, Response, Source = void>(
     action: AsyncAction<Request, Response>,
     resolver: Resolver<Request, Response, Source>,
     withLatestFrom$?: Observable<Source>,
+    attachOnResponse: (action: Action<Request>, response?: Response) => Headers = () => [],
+    attachOnError: (action: Action<Request>, error?: Error) => Headers = () => [],
 ) {
     const asyncOfType = WithHeaderOfType(asyncHeaderType);
     const requestType = action.Request.type;
@@ -67,8 +69,16 @@ export function basicAsyncHeaderResolver<Request, Response, Source = void>(
             );
             const thisAsyncOfType = WithHeaderIdOfType(async.id);
             const cancel$ = actions$.pipe(thisAsyncOfType(cancelType));
-            const onResolve = (response: Response) => new action.Response(response, async);
-            const onError = (error: Error) => of(new action.Error(error, async));
+            const onResolve = (response: Response) => new action.Response(
+                response,
+                request as Action<Request>,
+                attachOnResponse(request as Action<Request>)
+            );
+            const onError = (error: Error) => of(new action.Error(
+                error,
+                request as Action<Request>,
+                attachOnError(request as Action<Request>)
+            ));
             return resolved$.pipe(take(1), map(onResolve), catchError(onError), takeUntil(cancel$));
         })
     );

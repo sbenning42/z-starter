@@ -16,3 +16,9 @@ export function grabHeaderIds(...headerIds: string[]) {
 export function grabHeader(...headerTypes: string[]) {
     return findHeader(({ type }) => headerTypes.includes(type));
 }
+
+export function pluckPayload<Payload>() {
+    return (actions$: Observable<Action<Payload>>) => actions$.pipe(
+        map(action => action['payload'] as Payload),
+    );
+}

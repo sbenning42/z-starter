@@ -6,15 +6,21 @@ import {
     ActionWithPayload,
     SyncAction,
     AsyncAction,
+    attachHeader,
+    grabHeader,
+    asHeaders
 } from './models';
-import { Action } from './types';
-import { attachHeader } from './tools';
+import { Action, HeadersType } from './types';
 import {
     ASYNC_HEADER,
     typeAsRequest,
     typeAsResponse,
     typeAsCancel,
-    typeAsError
+    typeAsError,
+    isARequestType,
+    isAResponseType,
+    isACancelType,
+    isAnErrorType
 } from './symbols';
 import {
     AsyncRequestWithoutPayloadActionConstructor,
@@ -23,12 +29,19 @@ import {
     SyncCreateActionConstructor,
     ActionType,
     Dispatcher,
-    ActionsSchema
+    ActionsSchema,
+    Notifier
 } from './dirty-types';
-import { Observable } from 'rxjs';
+import { Observable, of, EMPTY } from 'rxjs';
+import { Actions } from '@ngrx/effects';
+import { withHeaderIds } from '../custom-rxjs-operators/filters';
+import { take, filter, switchMap } from 'rxjs/operators';
 
 export class ActionFactory {
-    constructor(protected store: Store<any>) {}
+    constructor(
+        protected store: Store<any>,
+        protected actions$: Actions<Action<any>>,
+    ) {}
     create<Request, Response = void, Async extends boolean = Response extends void ? false : true>(
         type: string,
         async: Async = false as Async,
@@ -42,60 +55,123 @@ export class ActionFactory {
 
         const _store = this.store;
         const _dispatch = <T>() => (action: Action<T>) => (_store.dispatch(action), action);
+        const _onRequest = <Request>() => (request: Action<Request | void>) => {
+            const async = grabHeader(ASYNC_HEADER)(request);
+            return this.actions$.pipe(
+                withHeaderIds(async.id),
+                take(1),
+                switchMap((action: Action<Request>) => isARequestType(action.type) ? of(action) : EMPTY)
+            ) as Observable<Action<Request>>;
+        };
+        const _onFinish = <Request, Response>() => (request: Action<Request | void>) => {
+            const async = grabHeader(ASYNC_HEADER)(request);
+            return this.actions$.pipe(
+                filter(action => action.type !== request.type),
+                withHeaderIds(async.id),
+                take(1),
+            ) as Observable<Action<Response | Error>>;
+        };
+        const _onResponse = <Request, Response>() => (request: Action<Request | void>) => {
+            const async = grabHeader(ASYNC_HEADER)(request);
+            return this.actions$.pipe(
+                filter(action => action.type !== request.type),
+                withHeaderIds(async.id),
+                take(1),
+                switchMap((action: Action<Response>) => isAResponseType(action.type) ? of(action) : EMPTY)
+            ) as Observable<Action<Response>>;
+        };
+        const _onCancel = <Request>() => (request: Action<Request | void>) => {
+            const async = grabHeader(ASYNC_HEADER)(request);
+            return this.actions$.pipe(
+                filter(action => action.type !== request.type),
+                withHeaderIds(async.id),
+                take(1),
+                switchMap((action: Action<void>) => isACancelType(action.type) ? of(action) : EMPTY)
+            ) as Observable<Action<void>>;
+        };
+        const _onError = <Request>() => (request: Action<Request | void>) => {
+            const async = grabHeader(ASYNC_HEADER)(request);
+            return this.actions$.pipe(
+                filter(action => action.type !== request.type),
+                withHeaderIds(async.id),
+                take(1),
+                switchMap((action: Action<Error>) => isAnErrorType(action.type) ? of(action) : EMPTY)
+            ) as Observable<Action<Error>>;
+        };
         
         class SyncCreateAction extends ActionWithPayload<Request> {
             static type = type;
             static dispatch = _dispatch<Request>();
-            constructor(payload: Request, headers: Headers = new Headers()) {
-                super(type, headers, payload);
+            static onFinish = _onFinish<any, any>();
+            static onRequest = _onRequest<any>();
+            static onResponse = _onResponse<any, any>();
+            static onCancel = _onCancel<any>();
+            static onError = _onError<any>();
+            constructor(payload: Request, headers: HeadersType = []) {
+                super(type, asHeaders(headers), payload);
             }
         }
         
         class SyncCreateActionWithouPayload extends ActionWithoutPayload {
             static type = type;
             static dispatch = _dispatch<void>();
-            constructor(headers: Headers = new Headers()) {
-                super(type, headers);
+            static onFinish = _onFinish<any, any>();
+            static onRequest = _onRequest<any>();
+            static onResponse = _onResponse<any, any>();
+            static onCancel = _onCancel<any>();
+            static onError = _onError<any>();
+            constructor(headers: HeadersType = []) {
+                super(type, asHeaders(headers));
             }
         }
 
         class AsyncRequestAction extends ActionWithPayload<Request> {
             static type = requestType;
             static dispatch = _dispatch<Request>();
-            constructor(payload: Request, headers: Headers = new Headers()) {
-                super(requestType, attachHeader(headers, new Header(ASYNC_HEADER)), payload);
+            static onFinish = _onFinish<Request, Response>();
+            static onRequest = _onRequest<Request>();
+            static onResponse = _onResponse<Request, Response>();
+            static onCancel = _onCancel<Request>();
+            static onError = _onError<Request>();
+            constructor(payload: Request, headers: HeadersType = []) {
+                super(requestType, attachHeader(asHeaders(headers), new Header(ASYNC_HEADER)), payload);
             }
         }
         
         class AsyncRequestActionWithouPayload extends ActionWithoutPayload {
             static type = requestType;
             static dispatch = _dispatch<void>();
-            constructor(headers: Headers = new Headers()) {
-                super(requestType, (headers.push(new Header(ASYNC_HEADER)), headers));
+            static onFinish = _onFinish<void, Response>();
+            static onRequest = _onRequest<Request>();
+            static onResponse = _onResponse<Request, Response>();
+            static onCancel = _onCancel<Request>();
+            static onError = _onError<Request>();
+            constructor(headers: HeadersType = []) {
+                super(requestType, attachHeader(asHeaders(headers), new Header(ASYNC_HEADER)));
             }
         }
         
         class AsyncResponseAction extends ActionWithPayload<Response> {
             static type = responseType;
             static dispatch = _dispatch<Response>();
-            constructor(payload: Response, async: Header, headers: Headers = new Headers()) {
-                super(responseType, attachHeader(headers, async), payload);
+            constructor(payload: Response, public request: Action<Request>, headers: HeadersType = []) {
+                super(responseType, attachHeader(asHeaders(headers), grabHeader(ASYNC_HEADER)(request)), payload);
             }
         }
         
         class AsyncCancelAction extends ActionWithoutPayload {
             static type = cancelType;
             static dispatch = _dispatch<void>();
-            constructor(async: Header, headers: Headers = new Headers()) {
-                super(cancelType, attachHeader(headers, async));
+            constructor(public request: Action<Request>, headers: HeadersType = []) {
+                super(cancelType, attachHeader(asHeaders(headers), grabHeader(ASYNC_HEADER)(request)));
             }
         }
         
         class AsyncErrorAction extends ActionWithPayload<Error> {
             static type = errorType;
             static dispatch = _dispatch<Error>();
-            constructor(payload: Error, async: Header, headers: Headers = new Headers()) {
-                super(errorType, attachHeader(headers, async), payload);
+            constructor(payload: Error, public request: Action<Request>, headers: HeadersType = []) {
+                super(errorType, attachHeader(asHeaders(headers), grabHeader(ASYNC_HEADER)(request)), payload);
             }
         }
         
@@ -105,8 +181,8 @@ export class ActionFactory {
                 : AsyncRequestActionWithouPayload
         ) as (
             Request extends void
-                ? AsyncRequestWithoutPayloadActionConstructor & ActionType & Dispatcher<void>
-                : AsyncRequestActionConstructor<Request> & ActionType & Dispatcher<Request>
+                ? AsyncRequestWithoutPayloadActionConstructor & ActionType & Dispatcher<void> & Notifier<void, Response>
+                : AsyncRequestActionConstructor<Request> & ActionType & Dispatcher<Request> & Notifier<Request, Response>
         );
         
         const SyncActionSwitchPayload = (
@@ -115,8 +191,8 @@ export class ActionFactory {
                 : SyncCreateActionWithouPayload
         ) as (
             Request extends void
-                ? SyncCreateActionWithoutPayloadConstructor & ActionType & Dispatcher<void>
-                : SyncCreateActionConstructor<Request> & ActionType & Dispatcher<Request>
+                ? SyncCreateActionWithoutPayloadConstructor & ActionType & Dispatcher<void> & Notifier<void, any>
+                : SyncCreateActionConstructor<Request> & ActionType & Dispatcher<Request> & Notifier<void, any>
         );
         
         return (
@@ -144,6 +220,7 @@ export class ZStore<State = {}, Schema extends ActionsSchema = {}> {
     };
     constructor(
         public store: Store<any>,
+        public actions$: Actions<Action<any>>,
         public selector: string,
         public initial: State = {} as any,
         public config: {
@@ -154,7 +231,7 @@ export class ZStore<State = {}, Schema extends ActionsSchema = {}> {
             };
         } = {} as any
     ) {
-        const asyncActionFactory = new ActionFactory(store);
+        const asyncActionFactory = new ActionFactory(store, actions$);
         const selectState = states => states[selector] as State;
         this.Z = {
             ...Object.entries(initial).reduce((Z, [key]) => ({ ...Z,

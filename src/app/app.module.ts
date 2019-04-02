@@ -12,9 +12,6 @@ import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 
 import { CoreModule } from './core/core.module';
-import { StorageStore } from './stores/storage/storage.store';
-import { StorageService } from './core/services/storage/storage.service';
-import { EffectsModule } from '@ngrx/effects';
 
 @NgModule({
   declarations: [AppComponent],
@@ -24,17 +21,11 @@ import { EffectsModule } from '@ngrx/effects';
     IonicModule.forRoot(),
     AppRoutingModule,
     CoreModule,
-    StoreDevtoolsModule.instrument({ maxAge: 100 }),
-    EffectsModule.forFeature([
-      StorageStore
-    ]),
   ],
   providers: [
     StatusBar,
     SplashScreen,
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
-    StorageService,
-    StorageStore,
   ],
   bootstrap: [AppComponent]
 })

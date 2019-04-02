@@ -40,6 +40,7 @@ export const storageReducersConfig = {
     get: {
         response: (state: StorageState, { payload }: Action<Identifiable[]>) => ({
             ...storageAdapter.addAll(payload, state),
+            loaded: true,
         }),
     },
     save: {

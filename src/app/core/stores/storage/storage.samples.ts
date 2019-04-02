@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { StorageStore } from './storage.store';
 import { Identifiable } from './storage.config';
+import { Header } from 'src/app/core/z/core/models';
 
 export class SomeStorageConsumerComponent implements OnInit {
 
@@ -31,28 +32,32 @@ export class SomeStorageConsumerComponent implements OnInit {
 
     constructor(public storage: StorageStore) {}
     
+    private _headers(name: string) {
+        return [new Header('fromComponent', `SomeStorageConsumerComponent@${name}`)];
+    }
+
     ngOnInit() {
         this.getStorage();
     }
 
     getStorage() {
         const { Request } = this.storage.Z.get;
-        Request.dispatch(new Request());
+        Request.dispatch(new Request(this._headers('getStorage')));
     }
 
     saveInStorage(...identifiables: Identifiable[]) {
         const { Request } = this.storage.Z.save;
-        Request.dispatch(new Request(identifiables));
+        Request.dispatch(new Request(identifiables, this._headers('saveInStorage')));
     }
 
     removeFromStorage(...ids: string[]) {
         const { Request } = this.storage.Z.remove;
-        Request.dispatch(new Request(ids));
+        Request.dispatch(new Request(ids, this._headers('removeFromStorage')));
     }
 
     clearStorage() {
         const { Request } = this.storage.Z.clear;
-        Request.dispatch(new Request());
+        Request.dispatch(new Request(this._headers('clearStorage')));
     }
 
 }

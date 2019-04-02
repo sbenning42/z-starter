@@ -1,5 +1,6 @@
-import { Action } from './types';
+import { Action, HeadersType } from './types';
 import { Headers, Header } from './models';
+import { Observable } from 'rxjs';
 
 export interface ActionType {
     type: string;
@@ -7,35 +8,42 @@ export interface ActionType {
 export interface Dispatcher<Payload> {
     dispatch: (action: Action<Payload | void>) => Action<Payload | void>;
 }
+export interface Notifier<Request, Response> {
+    onRequest: (action: Action<Request | void>) => Observable<Action<Request>>;
+    onFinish: (action: Action<Request | void>) => Observable<Action<Response | Error>>;
+    onResponse: (action: Action<Request | void>) => Observable<Action<Response>>;
+    onCancel: (action: Action<Request | void>) => Observable<Action<void>>;
+    onError: (action: Action<Request | void>) => Observable<Action<Error>>;
+}
 
 export type SyncCreateActionConstructor<Payload> = new (
     payload: Payload,
-    headers?: Headers
+    headers?: HeadersType
 ) => Action<Payload>;
 export type SyncCreateActionWithoutPayloadConstructor = new (
-    headers?: Headers
+    headers?: HeadersType
 ) => Action<void>;
 
 export type AsyncRequestActionConstructor<Request> = new (
     payload: Request,
-    headers?: Headers
+    headers?: HeadersType
 ) => Action<Request>;
 export type AsyncRequestWithoutPayloadActionConstructor = new (
-    headers?: Headers
+    headers?: HeadersType
 ) => Action<void>;
-export type AsyncResponseActionConstructor<Response> = new (
+export type AsyncResponseActionConstructor<Request, Response> = new (
     payload: Response,
-    async: Header,
-    headers?: Headers
+    request: Action<Request>,
+    headers?: HeadersType
 ) => Action<Response>;
-export type AsyncCancelActionConstructor = new (
-    async: Header,
-    headers?: Headers
+export type AsyncCancelActionConstructor<Request> = new (
+    request: Action<Request>,
+    headers?: HeadersType
 ) => Action<void>;
-export type AsyncErrorActionConstructor = new (
+export type AsyncErrorActionConstructor<Request> = new (
     payload: Error,
-    async: Header,
-    headers?: Headers
+    request: Action<Request>,
+    headers?: HeadersType
 ) => Action<Error>;
 
 export type ActionSchema<

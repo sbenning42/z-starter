@@ -4,9 +4,12 @@ import { Action } from './types';
 import { ZStore } from './dirty-models';
 import { SyncAction, AsyncAction } from './models';
 import { Observable } from 'rxjs';
+import { typeAsRequest, typeAsResponse, typeAsCancel, typeAsError } from './symbols';
+import { Actions } from '@ngrx/effects';
 
 export function createZStore<State, Schema extends ActionsSchema>(
     store: Store<any>,
+    actions$: Actions<Action<any>>,
     selector: string,
     initial: State,
     config: {
@@ -25,19 +28,27 @@ export function createZStore<State, Schema extends ActionsSchema>(
         }
     } = {}
 ) {
-    const Z = new ZStore<State, Schema>(store, selector, initial, config);
+    const Z = new ZStore<State, Schema>(store, actions$, selector, initial, config);
     const reducer = (state: State = initial, action: Action<any>) => {
-        const [name] = Object.entries(config)
+        const [name, thisConfig] = Object.entries(config)
             .find(([, _config]) => typeof(_config) !== 'string' && action.type.includes(_config.type))
             || [undefined, undefined];
-        if (name && reducerConfig[name] && Z[name]) {
-            const Zaction = Z[name];
-            const [, thisReducer] = Object.entries(Zaction)
-                .find(([, propV]) => propV && propV['type'] && propV['type'] === action.type)
-                || [undefined, undefined];
-            if (thisReducer) {
-                return (thisReducer as any)(state, action);
+        if (name && reducerConfig[name]) {
+            if (typeof(thisConfig) !== 'string') {
+                if (reducerConfig[name].request &&
+                    (thisConfig.type === action.type || typeAsRequest(thisConfig.type) === action.type)
+                ) {
+                    return reducerConfig[name].request(state, action as any);
+                } else if (reducerConfig[name].response && typeAsResponse(thisConfig.type) === action.type) {
+                    return reducerConfig[name].response(state, action as any);
+                } else if (reducerConfig[name].cancel && typeAsCancel(thisConfig.type) === action.type) {
+                    return reducerConfig[name].cancel(state, action as any);
+                } else if (reducerConfig[name].error && typeAsError(thisConfig.type) === action.type) {
+                    return reducerConfig[name].error(state, action as any);
+                }
+                return state;
             }
+            return state;
         }
         return state;
     }

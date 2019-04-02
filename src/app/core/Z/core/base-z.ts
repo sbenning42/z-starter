@@ -4,6 +4,7 @@ import { createZStore } from './factory';
 import { Store } from '@ngrx/store';
 import { SyncAction, AsyncAction } from './models';
 import { Observable } from 'rxjs';
+import { Actions } from '@ngrx/effects';
 
 export type Dispatch<Schema extends ActionsSchema> = (
     action: Action<Schema[keyof Schema]['0'] | void>
@@ -32,7 +33,8 @@ export class BaseZ<State, Schema extends ActionsSchema> {
     dispatch: Dispatch<Schema>;
     Z: Z<State, Schema>;
     constructor(
-        public store: Store<any>,    
+        public store: Store<any>,
+        public actions$: Actions<Action<any>>,
         public selector: string,
         public initial: State,
         public actionsConfig: {
@@ -54,10 +56,12 @@ export class BaseZ<State, Schema extends ActionsSchema> {
     ) {
         this.Z = createZStore<State, Schema>(
             store,
+            actions$,
             selector,
             initial,
             actionsConfig,
             reducersConfig,
         );
+        this.dispatch = (action: Action<Schema[keyof Schema]['0']>) => (store.dispatch(action), action);
     }
 }
